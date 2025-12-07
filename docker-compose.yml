@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  coturn:
+    image: instrumentisto/coturn
+    container_name: coturn-server
+    restart: always
+
+    ports:
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+      - "5349:5349/tcp"
+
+    environment:
+      - TURN_USER=demo
+      - TURN_PASSWORD=demo1234
+      - REALM=webrtc.local
+
+    command:
+      - --no-auth
+      - --lt-cred-mech
+      - --realm=webrtc.local
+      - --log-file=stdout
+      - --min-port=49152
+      - --max-port=65535
+      - --no-tls
+      - --no-dtls
+
+    volumes:
+      - ./turn_data:/var/lib/coturn
