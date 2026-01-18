@@ -47,3 +47,4 @@ List<IceServer> iceServers = List.of(
 - Poți schimba user/parolă/realm în Dockerfile și să redeployezi dacă vrei alte date.
 - Folosește aceste date în orice client care are nevoie de relay NAT (WebRTC, etc).
 "# TextOnly_turnserver" 
+"# TextOnly_turnserver" 
