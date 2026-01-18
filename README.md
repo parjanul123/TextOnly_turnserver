@@ -48,3 +48,4 @@ List<IceServer> iceServers = List.of(
 - Folosește aceste date în orice client care are nevoie de relay NAT (WebRTC, etc).
 "# TextOnly_turnserver" 
 "# TextOnly_turnserver" 
+"# TextOnly_turnserver" 
