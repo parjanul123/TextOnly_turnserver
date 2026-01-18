@@ -6,6 +6,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class SyncMessage {
     private String type; // message.sent, profile.updated, user.status.changed, contact.added
     private Long senderId;
