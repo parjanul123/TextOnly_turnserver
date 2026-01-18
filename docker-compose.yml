@@ -1,36 +1,9 @@
 version: "3.8"
 
 services:
-  coturn:
-    image: instrumentisto/coturn
-    container_name: coturn-server
-    restart: always
-
-    ports:
-      - "3478:3478/tcp"
-      - "3478:3478/udp"
-      - "5349:5349/tcp"
-
-    environment:
-      - TURN_USER=demo
-      - TURN_PASSWORD=demo1234
-      - REALM=webrtc.local
-
-    command:
-      - --no-auth
-      - --lt-cred-mech
-      - --realm=webrtc.local
-      - --log-file=stdout
-      - --min-port=49152
-      - --max-port=65535
-      - --no-tls
-      - --no-dtls
-
-    volumes:
-      - ./turn_data:/var/lib/coturn
-
+  # PostgreSQL Database
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: textonly-postgres
     restart: always
     environment:
@@ -41,6 +14,57 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TURN Server (for WebRTC/Video calls)
+  coturn:
+    image: instrumentisto/coturn
+    container_name: coturn-server
+    restart: always
+    ports:
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+      - "5349:5349/tcp"
+    environment:
+      - REALM=textonly.local
+    command:
+      - --log-file=stdout
+      - --lt-cred-mech
+      - --realm=textonly.local
+      - --user=demo:demo1234
+      - --min-port=49152
+      - --max-port=65535
+      - --no-tls
+      - --no-dtls
+    volumes:
+      - ./turn_data:/var/lib/coturn
+
+  # Spring Boot Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: textonly-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/textonly
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      JWT_SECRET: ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345678
+      JWT_EXPIRATION: 86400000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - m2_cache:/root/.m2
 
 volumes:
   postgres_data:
+  m2_cache:
