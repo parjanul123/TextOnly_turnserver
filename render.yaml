@@ -1,10 +1,14 @@
 services:
   - type: web
-    name: turn-server
+    name: textonly-backend
     env: docker
     plan: free
     dockerfilePath: Dockerfile
     autoDeploy: true
     envVars:
       - key: PORT
-        value: 3478
+        value: 10000
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DATABASE_URL
+        sync: false
