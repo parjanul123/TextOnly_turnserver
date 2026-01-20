@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextOnly Web Client - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            padding: 15px;
+            background: #f7f9fc;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #10b981;
+        }
+
+        .status-indicator.disconnected {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .auth-section {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-section.hidden {
+            display: none;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .input-group input {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #6b7280;
+        }
+
+        .chat-section {
+            display: none;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .chat-section.active {
+            display: flex;
+        }
+
+        .messages-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message.sent {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+
+        .message.received .message-content {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .message.sent .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info {
+            padding: 15px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+            margin: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .log-area {
+            margin: 20px;
+            padding: 15px;
+            background: #1f2937;
+            color: #10b981;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-entry.error {
+            color: #ef4444;
+        }
+
+        .log-entry.success {
+            color: #10b981;
+        }
+
+        .log-entry.info {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 TextOnly Web Client</h1>
+            <p>Conectare la Backend Spring Boot + WebSocket + TURN Server</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Deconectat</span>
+            </div>
+            <div id="userInfo" style="display: none;">
+                <strong id="displayName"></strong>
+            </div>
+        </div>
+
+        <!-- Auth Section -->
+        <div class="auth-section" id="authSection">
+            <div class="info">
+                👋 Configurează backend URL-ul mai jos și autentifică-te pentru a testa conexiunea.
+            </div>
+
+            <div class="input-group">
+                <label>Backend URL</label>
+                <input type="text" id="backendUrl" value="http://localhost:8080" placeholder="http://localhost:8080">
+            </div>
+
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="test@example.com">
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="password123">
+            </div>
+
+            <div class="input-group">
+                <label>Display Name</label>
+                <input type="text" id="displayName" placeholder="Test User">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="login()">Login</button>
+                <button class="secondary" onclick="register()">Register</button>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section" id="chatSection">
+            <div class="messages-area" id="messagesArea">
+                <div class="info">
+                    ✅ Conectat cu succes! Mesajele primite vor apărea aici.
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Scrie un mesaj..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()">Send</button>
+                <button class="secondary" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="log-area" id="logArea"></div>
+    </div>
+
+    <!-- SockJS & STOMP Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+
+    <script>
+        let stompClient = null;
+        let authToken = null;
+        let currentUserId = null;
+        let backendUrl = 'http://localhost:8080';
+
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logArea.appendChild(entry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            if (connected) {
+                indicator.className = 'status-indicator connected';
+                statusText.textContent = 'Conectat';
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                statusText.textContent = 'Deconectat';
+            }
+        }
+
+        async function register() {
+            backendUrl = document.getElementById('backendUrl').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const displayName = document.getElementById('displayName').value;
+
+            if (!email || !password || !displayName) {
+                alert('Te rog completează toate câmpurile!');
+                return;
+            }
+
+            try {
+                log('📝 Înregistrare utilizator...', 'info');
+                
+                const response = await fetch(`${backendUrl}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password, displayName })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Eroare la înregistrare');
+                }
+
+                const data = await response.json();
+                log('✅ Înregistrare reușită!', 'success');
+                
+                authToken = data.token;
+                currentUserId = data.userId;
+                
+                connectWebSocket();
+
+            } catch (error) {
+                log(`❌ Eroare: ${error.message}`, 'error');
+                alert(`Eroare la înregistrare: ${error.message}`);
+            }
+        }
+
+        async function login() {
+            backendUrl = document.getElementById('backendUrl').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('Te rog completează email și parola!');
+                return;
+            }
+
+            try {
+                log('🔐 Autentificare...', 'info');
+                
+                const response = await fetch(`${backendUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Eroare la autentificare');
+                }
+
+                const data = await response.json();
+                log('✅ Autentificare reușită!', 'success');
+                
+                authToken = data.token;
+                currentUserId = data.userId;
+                
+                document.getElementById('displayName').textContent = data.displayName;
+                document.getElementById('userInfo').style.display = 'block';
+                
+                connectWebSocket();
+
+            } catch (error) {
+                log(`❌ Eroare: ${error.message}`, 'error');
+                alert(`Eroare la autentificare: ${error.message}`);
+            }
+        }
+
+        function connectWebSocket() {
+            try {
+                log('🔌 Conectare la WebSocket...', 'info');
+                
+                const socket = new SockJS(`${backendUrl}/ws/sync`);
+                stompClient = StompJs.Stomp.over(socket);
+
+                stompClient.connect(
+                    { Authorization: `Bearer ${authToken}` },
+                    (frame) => {
+                        log('✅ WebSocket conectat!', 'success');
+                        updateStatus(true);
+                        
+                        // Subscribe la mesaje personale
+                        stompClient.subscribe(`/topic/chat/${currentUserId}`, (message) => {
+                            const data = JSON.parse(message.body);
+                            log(`📩 Mesaj primit: ${data.content}`, 'info');
+                            displayMessage(data, false);
+                        });
+
+                        // Subscribe la status utilizatori
+                        stompClient.subscribe('/topic/users/status', (message) => {
+                            const data = JSON.parse(message.body);
+                            log(`👤 Status update: ${data.userId} - ${data.status}`, 'info');
+                        });
+
+                        // Arată interfața de chat
+                        document.getElementById('authSection').classList.add('hidden');
+                        document.getElementById('chatSection').classList.add('active');
+                    },
+                    (error) => {
+                        log(`❌ Eroare WebSocket: ${error}`, 'error');
+                        updateStatus(false);
+                    }
+                );
+
+            } catch (error) {
+                log(`❌ Eroare conectare: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+
+            if (!content) return;
+
+            try {
+                // Trimite prin REST API
+                const response = await fetch(`${backendUrl}/api/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        receiverId: 999, // ID test - înlocuiește cu ID-ul real
+                        content: content
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Eroare la trimiterea mesajului');
+                }
+
+                const message = await response.json();
+                log(`✉️ Mesaj trimis: ${content}`, 'success');
+                
+                displayMessage({ content, senderId: currentUserId }, true);
+                input.value = '';
+
+            } catch (error) {
+                log(`❌ Eroare: ${error.message}`, 'error');
+                alert(`Eroare la trimiterea mesajului: ${error.message}`);
+            }
+        }
+
+        function displayMessage(message, isSent) {
+            const messagesArea = document.getElementById('messagesArea');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message.content;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString();
+            
+            contentDiv.appendChild(timeDiv);
+            messageDiv.appendChild(contentDiv);
+            messagesArea.appendChild(messageDiv);
+            
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function logout() {
+            if (stompClient) {
+                stompClient.disconnect();
+                log('👋 Deconectat', 'info');
+            }
+            
+            authToken = null;
+            currentUserId = null;
+            updateStatus(false);
+            
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('chatSection').classList.remove('active');
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('messagesArea').innerHTML = '<div class="info">✅ Conectat cu succes! Mesajele primite vor apărea aici.</div>';
+        }
+
+        // Initial log
+        log('🚀 TextOnly Web Client inițializat', 'success');
+        log('📝 Backend URL: ' + document.getElementById('backendUrl').value, 'info');
+        updateStatus(false);
+    </script>
+</body>
+</html>

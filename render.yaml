@@ -1,14 +1,35 @@
 services:
+  # PostgreSQL Database
+  - type: pserv
+    name: textonly-db
+    env: docker
+    plan: free
+    ipAllowList: []
+    
+  # Spring Boot Backend
   - type: web
     name: textonly-backend
     env: docker
     plan: free
-    dockerfilePath: Dockerfile
+    dockerfilePath: ./Dockerfile
     autoDeploy: true
+    healthCheckPath: /api/users/me
     envVars:
       - key: PORT
         value: 10000
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: textonly-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_USERNAME
+        fromDatabase:
+          name: textonly-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: textonly-db
+          property: password
