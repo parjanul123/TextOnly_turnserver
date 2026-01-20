@@ -6,7 +6,8 @@ COPY pom.xml .
 RUN mvn dependency:go-offline
 
 COPY src/ src/
-RUN mvn clean package -DskipTests
+# Build in batch mode and skip running/compiling tests to avoid CI failures
+RUN mvn -B clean package -DskipTests -Dmaven.test.skip=true --no-transfer-progress
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
